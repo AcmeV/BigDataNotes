@@ -1,4 +1,4 @@
-# Hadoop 环境搭建
+# Hadoop 集群搭建
 ## 一、虚拟机准备(Centos 6.8)
     1、配置主机名: vim /etc/sysconfig/network
     2、配置网络 ：vim /etc/sysconfig/network-scripts

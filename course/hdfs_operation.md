@@ -1,5 +1,5 @@
 # HDFS 基本操作
-## 一、HDFS Shell 交互
+## 一、HDFS 命令
 ### 1. 基本结构
 ```shell
 hadoop fs [-command ]
