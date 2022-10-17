@@ -2,8 +2,8 @@
 ## 一、HDFS 命令
 ### 1. 基本结构
 ```shell
-hadoop fs [-command ]
-hdfs dfs [-command]
+hadoop fs [-command ] [params]
+hdfs dfs [-command] [params]
 ```
 
 ### 2. 基本命令
@@ -13,29 +13,34 @@ hadoop fs -ls [-R] path # 递归的展示目录
 hadoop fs -mkdir [-p] path # 创建目录（-p表示递归创建目录）
 hadoop fs -rm [-r] file_path # 删除文件（-r删除文件夹）
 ```
+![alt](../pic/hadoop/shell/base.png "基本命令结果")
 ### 3. 文件双传和下载
 #### (1) 本地 -> HDFS
 ```shell
 hadoop fs -put sourceFileOrDir targetDir #将sourceFileOrDir复制到HDFS的targetDir下
-hadoop fs -moveFromLocalOrDir sourceFileOrDir targetDir #将sourceFileOrDir剪切到HDFS的targetDir下
+hadoop fs -moveFromLocal sourceFileOrDir targetDir #将sourceFileOrDir剪切到HDFS的targetDir下
 hadoop fs -appendToFile sourceFileOrDir targetFile #将sourceFileOrDir追加到HDFS的targetFile尾部
 ```
+![alt](../pic/hadoop/shell/local2hdfs.png "local2hdfs")
 #### (2) HDFS -> HDFS
 ```shell
 hadoop fs -cp #mv、chown、chgrp、chmod、mkdir、du、df、cat、rm、du、df、tail和linux的命令用法类似
 hadoop fs -setrep count FileOrDir #将HDFS上的FileOrDir设置count个副本
 ```
+![alt](../pic/hadoop/shell/hdfs2hdfs.png "hdfs2hdfs")
 #### (3) HDFS -> 本地
 ```shell
 hadoop fs -get sourceFileOrDir targetDir #将HDFS上的sourceFileOrDir下载到本地的targetDir
 hadoop fs -getmerge sourceDir targetFile #将HDFS上的sourceDir里的所有文件合并到本地的targetFile
 ```
+![alt](../pic/hadoop/shell/hdfs2local.png "hdfs2local")
 #### (4) 其他命令
 ```shell
 hadoop fs -checksum hdfsFile # 查看HDFS上文件的校验码信息
 hadoop fs -count hdfsDir # 查看指定目录下文件的数目
 hadoop fs -rmdir hdfsDir # 删除HDFS中指定的空目录
 ```
+![alt](../pic/hadoop/shell/other_cmd.png "other cmd")
 
 ## 二、HDFS Java API
 ### 1. 准备工作
@@ -103,6 +108,7 @@ fileSystem.mkdirs(new Path("/hadoopDir")); // 1. 创建文件夹
 fileSystem.delete(new Path("/hadoopDir"));   // 2. 删除文件夹
 fileSystem.exist(new Path("/hadoopDir"));   // 3. 判断文件夹是否存在
 ```
+![alt](../pic/hadoop/api/base.png "base api")
 ##### 2.3.2 遍历文件
 ```java
 // true表示递归遍历
@@ -131,7 +137,10 @@ while (remoteIterator.hasNext()) {
         	System.out.println(host + "  ");
     }
 }
+```
+![alt](../pic/hadoop/api/list_file.png "list file")
 ##### 2.3.3 遍历目录
+```java
 System.out.println("根目录有以下子目录: ");
 RemoteIterator<LocatedFileStatus> iterator = fileSystem.listLocatedStatus(new Path("/"));
 while (iterator.hasNext()){
@@ -140,6 +149,7 @@ while (iterator.hasNext()){
 		System.out.println(fileStatus.getPath());
 }
 ```
+![alt](../pic/hadoop/api/list_sub_dir.png "list sub directory")
 #### 2.4 文件操作
 ##### 2.4.1 基本操作
 ```java
@@ -149,6 +159,7 @@ fileSystem.copyToLocalFile(new Path(remotePath),
                 new Path(localPath)); // 2. 下载文件
 fileSystem.rename(new Path(remotePath), new Path(newRemotePath)); // 3. 重命名
 ```
+![alt](../pic/hadoop/api/file_base.png "file basic operation")
 ##### 2.4.2 追加内容到文件
 ```java
 FSDataOutputStream append = fileSystem.append(new Path(remotePath), 1024);
@@ -163,6 +174,7 @@ String line;
 while ((line = d.readLine()) != null)
 	System.out.println(line);
 ```
+![alt](../pic/hadoop/api/append_cat.png "append and cat")
 #### 2.5 关闭连接
 ```java
 fileSystem.close();
@@ -187,45 +199,44 @@ import java.text.SimpleDateFormat;
 
 /**
  * @author acme
- * @date 2022/10/13-13:44
+ * @date 2022/10/14-09:44
  */
 public class HDFSClient {
 
     private FileSystem fileSystem;
-    private URI uri;
-    private Configuration configuration;
 
-    private String localPath = "F:\\idea_workspace\\Hadoop\\src\\main\\resources";
-    private String hadoopPath = "/JavaApiHome";
-    
+    private final String localPath = "F:\\idea_workspace\\Hadoop\\src\\main\\resources";
+
+    private final String hadoopPath = "/javaapi_home/acme";
     @Before
     public void init() throws IOException, InterruptedException {
-        uri = URI.create("hdfs://192.168.2.31:9000");
-        configuration = new Configuration();
+        URI uri = URI.create("hdfs://acme:9000");
+        Configuration configuration = new Configuration();
         // 设置配置信息：出现相同的配置项时，优先选择API中的配置，其次是hdfs-site.xml中的配置，再其次是服务器默认配置
 //        configuration.setInt("dfs.replication", 1);
         fileSystem = FileSystem.get(uri, configuration, "root");
     }
-	
-	/* 目录操作 */
+
+
+    /* 目录操作 */
     // 创建目录
     @Test
     public void makeDir() throws IOException {
         fileSystem.mkdirs(new Path(hadoopPath));
     }
-    
+
     // 判断目录是否存在
     @Test
     public void pathExist() throws IOException {
-        System.out.println(hadoopPath + "exist? " + fileSystem.exists(new Path(path)));
+        System.out.println(hadoopPath + "exist? " + fileSystem.exists(new Path(hadoopPath)));
     }
-    
+
     // 删除目录
     @Test
     public void delete() throws IOException {
-        fileSystem.delete(new Path(hadoopPath), true);
+        fileSystem.delete(new Path(hadoopPath), false);
     }
-    
+
     // 遍历文件
     @Test
     public void listFiles() throws IOException {
@@ -253,7 +264,7 @@ public class HDFSClient {
         }
     }
 
-	// 遍历子目录
+    // 遍历子目录
     @Test
     public void listSubDir() throws IOException {
         System.out.println("根目录有以下子目录: ");
@@ -264,15 +275,18 @@ public class HDFSClient {
                 System.out.println(fileStatus.getPath());
         }
     }
-    
-    /* 文件操作 */
+
+
+    /*
+    文件操作
+     */
     // 上传
     @Test
     public void copyFromLocalFile() throws IOException {
-        fileSystem.copyFromLocalFile(new Path(localPath + "/log4j.properties"),
+        fileSystem.copyFromLocalFile(new Path(localPath + "/test.txt"),
                 new Path(hadoopPath));
     }
-    
+
     // 下载
     @Test
     public void copyToLocalFile() throws IOException {
@@ -283,15 +297,15 @@ public class HDFSClient {
     // 重命名
     @Test
     public void rename() throws IOException {
-        fileSystem.rename(new Path(hadoopPath), new Path("/input"));
+        fileSystem.rename(new Path(hadoopPath + "/test.txt"), new Path(hadoopPath + "/download.txt"));
     }
 
     // 查看文件内容
     public void printTxt(String filePath) throws IOException {
         Path remotePath = new Path(filePath);
 
-         FSDataInputStream in = fileSystem.open(remotePath);
-         BufferedReader d = new BufferedReader(new InputStreamReader(in));
+        FSDataInputStream in = fileSystem.open(remotePath);
+        BufferedReader d = new BufferedReader(new InputStreamReader(in));
         String line;
         while ((line = d.readLine()) != null) {
             System.out.println(line);
@@ -300,15 +314,15 @@ public class HDFSClient {
 
     @Test
     public void testAppend() throws IOException {
-        String filePath = hadoopPath + "/log4j.properties";
-        System.out.println("追加内容前，log4j.properties内容如下：");
+        String filePath = hadoopPath + "/download.txt";
+        System.out.println("追加内容前，download.txt：");
         printTxt(filePath);
 
         FSDataOutputStream append = fileSystem.append(new Path(filePath), 1024);
-        FileInputStream fileInputStream = new FileInputStream(localPath + "/append.txt");
+        FileInputStream fileInputStream = new FileInputStream(localPath + "/log4j.properties");
         IOUtils.copyBytes(fileInputStream, append, 1024, true);
 
-        System.out.println("\n\n追加内容后，log4j.properties内容如下：");
+        System.out.println("\n\n追加内容后，download.txt内容如下：");
         printTxt(filePath);
 
     }
